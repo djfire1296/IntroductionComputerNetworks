@@ -27,7 +27,6 @@ class UDPClient{
 		DatagramSocket clientSocket = new DatagramSocket();
 
 		// Send the sentence to Server 100 times continously
-//		byte[] ip = new byte[]{(byte)114, (byte)24, (byte)29, (byte)223};
 //		byte[] ip = new byte[]{(byte)127, (byte)0, (byte)0, (byte)1};
 //		InetAddress serverIP = InetAddress.getByAddress(ip);
 		String ipString = "127.0.0.1";
