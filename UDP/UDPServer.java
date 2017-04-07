@@ -1,7 +1,7 @@
 // UDPServer.java
 // Author: Chia-Tse, Wang
 // Time: 03/04/2017
-// Last Update: 06/04/2017
+// Last Update: 07/04/2017
 
 // TODO: Error will occur while the last packet didn't transmit since program can't teriminate!
 // However, it can be fixed by add timer in runTest. If server didn't receive packet for a given time, terminate
@@ -12,8 +12,10 @@ import java.io.*;
 import java.nio.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.*;
 
 class UDPServer{
+
 	public static void main(String[] args) throws Exception{
 		int port;
 		Scanner scanner = new Scanner(System.in);
@@ -59,25 +61,45 @@ class UDPServer{
 		ArrayList<Integer> received_test = new ArrayList<Integer>();
 		long st_time = System.currentTimeMillis();
 
-		int count;
-		for(count=0; ; count++){
-			serverSocket.receive(rcvdPkt);
+		int count = 0;
 
-			// sentence will format like "Hello,this is test: #100"
-			String sentence = new String(rcvdPkt.getData());
-			System.out.printf("%2d. receive = %s\n", count, sentence);
+		try{
+			for(count=0; ; count++){
+				Runnable receiving_packet = new Thread(){
+					@Override
+					public void run(){
+						try{
+							serverSocket.receive(rcvdPkt);
+						}catch(Exception e){}
+					}
+				};
+			
+				ExecutorService executor = Executors.newSingleThreadExecutor();
+				Future future = executor.submit(receiving_packet);
+				// executor.shutdown(); // This does not cancel the already-scheduled task.
 
-			String[] split_sentence = sentence.split("#");
-			received_test.add(Integer.parseInt(split_sentence[1].trim()));
+				future.get(10, TimeUnit.SECONDS);
 
-			if(Integer.parseInt(split_sentence[1].trim()) == testnum -1){
-				break;
-			}
+				// sentence will format like "Hello,this is test: #100"
+				String sentence = new String(rcvdPkt.getData());
+				System.out.printf("%2d. receive = %s\n", count, sentence);
+
+				String[] split_sentence = sentence.split("#");
+				received_test.add(Integer.parseInt(split_sentence[1].trim()));
+
+				if(Integer.parseInt(split_sentence[1].trim()) == testnum -1){
+					break;
+				}
+  			}
+			long end_time = System.currentTimeMillis();
+			System.out.printf("%d test are done in %.4f seconds\n", testnum, (end_time - st_time)/1000.0);
+		}catch(TimeoutException e){
+			long interrupt_end_time = System.currentTimeMillis();
+			System.out.printf("Last packet didn't transmit, %d test are done in %.4f seconds\n",
+														 testnum, (interrupt_end_time - st_time)/1000.0);
+			count --;
 		}
-
-		long end_time = System.currentTimeMillis();
-		System.out.printf("%d test are done in %.4f seconds\n", testnum, (end_time - st_time)/1000000.0);
-		finalresult(testnum, count+1, received_test);
+		finalresult(testnum, count+1, received_test);	
 	}
 
 	// Print final result of the test.
@@ -85,6 +107,8 @@ class UDPServer{
 		// check point: the size of the arraylist should match the number of received tests
 		if(received_test.size() != receivenum){
 			System.out.println("The arraylist of received test goes wrong! Check it again!");
+			System.out.println("size of received_test = " + received_test.size());
+			System.out.println("receivenum = " + receivenum);
 			System.exit(1);
 		}
 
@@ -112,8 +136,11 @@ class UDPServer{
 					st_idx = received_test.get(i+1).intValue();
 				}
 			}
-
 			rcvdInterval.add(received_test.get(received_test.size()-1) - st_idx + 1);
+
+			if(received_test.get(received_test.size()-1) != testnum -1){
+				lossInterval.add(testnum - 1 - received_test.get(received_test.size()-1));
+			}
 			
 			for(Integer r : rcvdInterval) sumrcvd += r.intValue();
 

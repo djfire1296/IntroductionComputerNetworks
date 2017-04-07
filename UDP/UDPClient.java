@@ -1,7 +1,7 @@
 // UDPClient.java
 // Author: Chia-Tse, Wang
 // Time: 03/04/2017
-// Last Update: 08/04/2017
+// Last Update: 07/04/2017
 
 import java.io.*;
 import java.nio.*;
@@ -12,10 +12,15 @@ class UDPClient{
 	public static void main(String[] args) throws Exception{
 		int testnum;
 		int port = 9000; // defualt port = 9000
+		boolean suspend = false;
 		Scanner scanner = new Scanner(System.in);
 
 		if(args.length == 1){
-			testnum = Integer.parseInt(args[0]);
+			port = Integer.parseInt(args[0]);
+		}else if(args.length == 2){
+			if(args[1].equals('-s')){
+				suspend = true;
+			}
 		}else{
 			System.out.print("Please enter a port number(9000 - 9100): ");
 			port = scanner.nextInt();
@@ -27,12 +32,13 @@ class UDPClient{
 		DatagramSocket clientSocket = new DatagramSocket();
 
 		// Send the sentence to Server 100 times continously
-//		byte[] ip = new byte[]{(byte)127, (byte)0, (byte)0, (byte)1};
-//		InetAddress serverIP = InetAddress.getByAddress(ip);
-		String ipString = "127.0.0.1";
+//		byte[] ip = new byte[]{(byte)114, (byte)24, (byte)29, (byte)223};
+		byte[] ip = new byte[]{(byte)127, (byte)0, (byte)0, (byte)1};
+		InetAddress serverIP = InetAddress.getByAddress(ip);
+//		String ipString = "127.0.0.1";
 //		ipString = ChangeIp();
 
-		InetAddress serverIP = InetAddress.getByName(ipString);
+//		InetAddress serverIP = InetAddress.getByName(ipString);
 		long st_time = System.currentTimeMillis();
 
 		for(int i=0; i<testnum; i++){
@@ -43,11 +49,13 @@ class UDPClient{
 			clientSocket.send(sendPkt);
 
 			// Suspend for 1us
-			Thread.sleep(1); // Prevent client side buffer overflow
+			if(suspend){
+				Thread.sleep(1); // Prevent client side buffer overflow
+			}
 		}
 		
 		long end_time = System.currentTimeMillis();
-		System.out.printf("%d test are done in %.4f seconds\n", testnum, (end_time - st_time)/1000000.0);
+		System.out.printf("%d test are done in %.4f seconds\n", testnum, (end_time - st_time)/1000.0);
 
 		clientSocket.close();
 	}

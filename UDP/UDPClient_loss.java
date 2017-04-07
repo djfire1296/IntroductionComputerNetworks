@@ -1,7 +1,7 @@
 // UDPClient_loss.java
 // Author: Chia-Tse, Wang
 // Time: 03/04/2017
-// Last Update: 08/04/2017
+// Last Update: 07/04/2017
 
 // This program is used for testing server status on local machine. Client will lost some packet in purpose which 
 // is generated randomly by GenerateLostList.
@@ -53,7 +53,7 @@ class UDPClient_loss{
 
 		long end_time = System.currentTimeMillis();
 		System.out.printf("%d test with %d lost are done in %.4f seconds\n",
-						 			testnum, lossnum, (end_time - st_time)/1000000.0);
+						 			testnum, lossnum, (end_time - st_time)/1000.0);
 		clientSocket.close();
 	}
 
